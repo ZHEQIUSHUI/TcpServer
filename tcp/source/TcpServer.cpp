@@ -183,7 +183,7 @@ void TcpServer::handlingAcceptLoop() {
 
 void TcpServer::waitingDataLoop() {
   {
-    std::lock_guard lock(client_mutex);
+    std::lock_guard<std::mutex> lock(client_mutex);
     for(auto it = client_list.begin(), end = client_list.end(); it != end; ++it) {
       auto& client = *it;
       if(client){

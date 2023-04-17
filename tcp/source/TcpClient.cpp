@@ -95,7 +95,7 @@ void TcpClient::handleSingleThread() {
   try {
     while(_status == status::connected) {
       if(DataBuffer data = loadData(); !data.empty()) {
-        std::lock_guard lock(handle_mutex);
+        std::lock_guard<std::mutex> lock(handle_mutex);
         handler_func(std::move(data));
       } else if (_status != status::connected) return;
     }
@@ -108,7 +108,7 @@ void TcpClient::handleSingleThread() {
 void TcpClient::handleThreadPool() {
   try {
     if(DataBuffer data = loadData(); !data.empty()) {
-      std::lock_guard lock(handle_mutex);
+      std::lock_guard<std::mutex> lock(handle_mutex);
       handler_func(std::move(data));
     }
     if(_status == status::connected) threads.thread_pool->addJob([this]{handleThreadPool();});
@@ -245,7 +245,7 @@ DataBuffer TcpClient::loadDataSync() {
 void TcpClient::setHandler(TcpClient::handler_function_t handler) {
 
   {
-    std::lock_guard lock(handle_mutex);
+    std::lock_guard<std::mutex> lock(handle_mutex);
     handler_func = handler;
   }
 

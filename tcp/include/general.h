@@ -52,7 +52,7 @@ class ThreadPool {
   std::queue<std::function<void()>> job_queue;
   std::mutex queue_mtx;
   std::condition_variable condition;
-  std::atomic<bool> pool_terminated = false;
+  std::atomic<bool> pool_terminated ;
 
   void setupThreadPool(uint thread_count) {
     thread_pool.clear();
@@ -64,7 +64,7 @@ class ThreadPool {
     std::function<void()> job;
     while (!pool_terminated) {
       {
-        std::unique_lock lock(queue_mtx);
+        std::unique_lock<std::mutex> lock(queue_mtx);
         condition.wait(lock, [this](){return !job_queue.empty() || pool_terminated;});
         if(pool_terminated) return;
         job = job_queue.front();
@@ -74,7 +74,10 @@ class ThreadPool {
     }
   }
 public:
-  ThreadPool(uint thread_count = std::thread::hardware_concurrency()) {setupThreadPool(thread_count);}
+  ThreadPool(uint thread_count = std::thread::hardware_concurrency()) {
+    pool_terminated = false;
+    setupThreadPool(thread_count);
+  }
 
   ~ThreadPool() {
     pool_terminated = true;
@@ -85,7 +88,7 @@ public:
   void addJob(F job) {
     if(pool_terminated) return;
     {
-      std::unique_lock lock(queue_mtx);
+      std::unique_lock<std::mutex> lock(queue_mtx);
       job_queue.push(std::function<void()>(job));
     }
     condition.notify_one();
